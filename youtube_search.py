@@ -12,24 +12,25 @@ def normalize(query: str):
     query = re.sub(r"\s+", " ", query).strip()
     return query
 
-def priority(title: str) -> int:
-    t = title.lower() 
-    
-    if "official audio" in t:
-        return 1
+def priority(title: str, artist: str) -> int:
 
-    if "lyric video" in t or "lyrics" in t or "가사" in t:
-        return 2
+    if "official audio" in title:
+        base = 1
+    elif "lyric video" in title or "lyrics" in title or "가사" in title:
+        base = 2
+    elif ("official music video" in title
+          or "official video" in title
+          or "official mv" in title):
+        base = 3
+    elif "official visualizer" in title:
+        base = 4
+    else:
+        base = 5
 
-    if ("official music video" in t
-        or "official video" in t
-        or "official mv" in t):
-        return 3
-    
-    if "official visualizer" in t:
-        return 4
+    if not artist:  
+        base += 10   
 
-    return 5
+    return base
 
 
 def search(req: SearchRequest):
@@ -47,7 +48,7 @@ def search(req: SearchRequest):
 
         combined_query = f"{artist} {title}".strip()
 
-        search_result = ydl.extract_info(f"ytsearch5:{combined_query}", download=False)
+        search_result = ydl.extract_info(f"ytsearch20:{combined_query}", download=False)
 
         entries = [
             {
@@ -59,6 +60,6 @@ def search(req: SearchRequest):
             if e.get("id")
         ]
 
-        entries.sort(key=lambda e: priority(e["title"] or ""))
+        entries.sort(key=lambda e: priority(e["title"] or "", artist))
 
-        return entries
+        return entries[:5]
