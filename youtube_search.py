@@ -2,16 +2,6 @@ import yt_dlp
 from models import SearchRequest
 import re
 
-
-def normalize(query: str):
-    if not query:
-        return ""
-    query = query.replace("#", " ")
-    query = re.sub(r"[(){}\[\]]", " ", query)
-    query = re.sub(r"[^0-9a-zA-Z가-힣 ]", " ", query)
-    query = re.sub(r"\s+", " ", query).strip()
-    return query
-
 def priority(title: str, artist: str) -> int:
 
     if "official audio" in title:
@@ -42,11 +32,8 @@ def search(req: SearchRequest):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        
-        artist = normalize(req.artist)
-        title = normalize(req.title)
 
-        combined_query = f"{artist} {title}".strip()
+        combined_query = f"{req.artist} {req.title}".strip()
 
         search_result = ydl.extract_info(f"ytsearch20:{combined_query}", download=False)
 
@@ -60,6 +47,6 @@ def search(req: SearchRequest):
             if e.get("id")
         ]
 
-        entries.sort(key=lambda e: priority(e["title"] or "", artist))
+        entries.sort(key=lambda e: priority(e["title"] or "", req.artist))
 
         return entries[:5]
